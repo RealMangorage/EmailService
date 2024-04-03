@@ -1,6 +1,4 @@
-package org.mangorage.mail.api;
-
-import org.mangorage.mail.api.property.PropertyBuilder;
+package org.mangorage.mail.api.property;
 
 import java.util.Properties;
 

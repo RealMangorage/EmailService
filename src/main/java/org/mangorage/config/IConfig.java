@@ -1,2 +1,4 @@
-package org.mangorage.general.config;public interface IConfig {
+package org.mangorage.config;
+
+public interface IConfig {
 }
