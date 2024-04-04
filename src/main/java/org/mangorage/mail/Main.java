@@ -6,10 +6,10 @@ import org.mangorage.mail.api.EmailWithSession;
 import javax.mail.Message;
 import javax.mail.MessagingException;
 import java.io.UnsupportedEncodingException;
-import java.time.ZoneId;
 import java.util.concurrent.TimeUnit;
 
 public class Main {
+    public final static boolean SEND = false;
 
     public static void main(String[] args) {
         if (args.length == 0) return;
@@ -23,27 +23,28 @@ public class Main {
         final EmailWithSession SMTPSession = email.createDefaultGmailSMTPSession();
         final EmailWithSession IMAPSSession = email.createDefaultGmailImapsSession();
 
-        try {
-            SMTPSession.createEmail()
-                    .setDefaultHeader()
-                    .setReplyTo(defaultInfo.replyTo())
-                    .setRecipients(Message.RecipientType.TO, defaultInfo.recipients())
-                    .setSubject("Testing")
-                    .setText("""
-                            If you got this, that means the new API worked!
-                            """)
-                    .setSentFrom(defaultInfo.sentFrom(), defaultInfo.username())
-                    .send();
-        } catch (MessagingException | UnsupportedEncodingException e) {
-            e.printStackTrace();
+        if (SEND) {
+            try {
+                SMTPSession.createEmail()
+                        .setDefaultHeader()
+                        .setReplyTo(defaultInfo.replyTo())
+                        .setRecipients(Message.RecipientType.TO, defaultInfo.recipients())
+                        .setSubject("Testing")
+                        .setText("""
+                                If you got this, that means the new API worked!
+                                """)
+                        .setSentFrom(defaultInfo.sentFrom(), defaultInfo.username())
+                        .send();
+            } catch (MessagingException | UnsupportedEncodingException e) {
+                e.printStackTrace();
+            }
         }
 
-
         IMAPSSession.retrieveMessagesAsync(m -> {
-
-            if ((System.currentTimeMillis() - m.getSentDate().toInstant().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()) <= 45_000) {
-                System.out.println(m.getSubject());
-                SMTPSession.replyToMessage(m, """
+            System.out.println(m.getSubject());
+            SMTPSession.createEmailResponse(m)
+                    .setDefaultHeader()
+                    .setReplyContent("""
                         Hello there! I will respond to you as soon as possible!
                         
                         
@@ -51,9 +52,9 @@ public class Main {
                      
                         
                         This is an automated response.
-                        """);
-            }
-
+                    """)
+                    .send();
         }, 30, TimeUnit.SECONDS);
+        System.out.println("TEST!");
     }
 }

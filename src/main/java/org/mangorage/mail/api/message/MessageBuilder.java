@@ -3,6 +3,7 @@ package org.mangorage.mail.api.message;
 
 import org.mangorage.general.Utils;
 
+import javax.mail.Address;
 import javax.mail.Message;
 import javax.mail.MessagingException;
 import javax.mail.Session;
@@ -17,6 +18,10 @@ import java.util.List;
 public abstract class MessageBuilder {
     public static IMessageBuilder sendNewMessage(Session session) {
         return new DefaultMessageBuilder(new MimeMessage(session));
+    }
+
+    public static IMessageResponseBuilder reply(Message message, Session session) {
+        return new DefaultMessageResponseBuilder(message, new MimeMessage(session));
     }
 
     private record DefaultMessageBuilder(MimeMessage message) implements IMessageBuilder {
@@ -64,6 +69,37 @@ public abstract class MessageBuilder {
             return this;
         }
 
+
+        @Override
+        public Message build() {
+            return message;
+        }
+    }
+
+    private record DefaultMessageResponseBuilder(Message original, MimeMessage message) implements IMessageResponseBuilder {
+
+        @Override
+        public IMessageResponseBuilder setDefaultHeader() throws MessagingException {
+
+            Address[] fromAddresses = original.getReplyTo();
+            if (fromAddresses == null || fromAddresses.length == 0) {
+                fromAddresses = original.getFrom();
+            }
+            message.setFrom(fromAddresses[0]); // Set From to original sender's address
+            message.setRecipient(Message.RecipientType.TO, original.getFrom()[0]); // Set To to original sender's address
+            message.setSubject("Re: " + original.getSubject()); // Add "Re:" to original subject
+
+            // Set the In-Reply-To header
+            String messageId = original.getHeader("Message-ID")[0];
+            message.setHeader("In-Reply-To", messageId);
+            return this;
+        }
+
+        @Override
+        public IMessageResponseBuilder setReplyContent(String text) throws MessagingException {
+            message.setText(text);
+            return this;
+        }
 
         @Override
         public Message build() {
