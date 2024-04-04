@@ -1,5 +1,8 @@
 package org.mangorage.mail.api;
 
+import org.mangorage.mail.api.message.IMessageBuilder;
+import org.mangorage.mail.api.message.MessageBuilder;
+
 import javax.mail.Address;
 import javax.mail.Folder;
 import javax.mail.Message;
@@ -7,7 +10,6 @@ import javax.mail.MessagingException;
 import javax.mail.Session;
 import javax.mail.Store;
 import javax.mail.Transport;
-import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -76,29 +78,7 @@ public class EmailWithSession {
         }
     }
 
-    public void sendEmail(String sentFrom, String sentFromUsername, String recipient, String subject, String body) {
-        try {
-            MimeMessage msg = new MimeMessage(session);
-            //set message headers
-            msg.addHeader("Content-type", "text/HTML; charset=UTF-8");
-            msg.addHeader("format", "flowed");
-            msg.addHeader("Content-Transfer-Encoding", "8bit");
-
-            msg.setFrom(new InternetAddress(sentFrom, sentFromUsername));
-
-            msg.setReplyTo(InternetAddress.parse(sentFrom, false));
-
-            msg.setSubject(subject, "UTF-8");
-            msg.setText(body, "UTF-8");
-            msg.setRecipients(Message.RecipientType.TO, InternetAddress.parse(recipient, false));
-
-            System.out.println("Message is ready");
-
-            Transport.send(msg);
-
-            System.out.println("EMail Sent Successfully!!");
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+    public IMessageBuilder createEmail() {
+        return MessageBuilder.sendNewMessage(session);
     }
 }
